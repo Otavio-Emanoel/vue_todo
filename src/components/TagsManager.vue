@@ -6,9 +6,12 @@ interface Tag {
   color: string; // Should be hex or oklch color string
 }
 
-const props = defineProps<{
+const props = withDefaults(defineProps<{
   tags: Tag[];
-}>();
+  inline?: boolean;
+}>(), {
+  inline: false
+});
 
 const emit = defineEmits<{
   (e: 'update-tags', tags: Tag[]): void;
@@ -66,100 +69,176 @@ const deleteTag = (tagName: string) => {
 
 <template>
   <div class="tags-manager">
-    <button class="secondary w-full" @click="openModal">
-      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <path d="M12 5v14M5 12h14"/>
-      </svg>
-      Manage Categories
-    </button>
-
-    <!-- Modal Backdrop -->
-    <Teleport to="body">
-      <div v-if="showModal" class="modal-backdrop" @click.self="closeModal">
-        <div class="glass-panel modal-content animate-pop-in">
-          <div class="modal-header">
-            <h3>Manage Categories</h3>
-            <button class="close-btn" @click="closeModal" aria-label="Close Modal">
+    <!-- Inline View -->
+    <div v-if="props.inline" class="tags-manager-inline flex-col-inline">
+      <!-- Existing Tags -->
+      <div class="tags-list-container">
+        <h4 class="section-title">Current Tags</h4>
+        <div class="tags-grid">
+          <div 
+            v-for="tag in props.tags" 
+            :key="tag.name" 
+            class="tag-item"
+            :style="{ 
+              backgroundColor: tag.color + '15', 
+              borderColor: tag.color + '40', 
+              color: tag.color 
+            }"
+          >
+            <span class="dot" :style="{ backgroundColor: tag.color }"></span>
+            <span class="tag-name">{{ tag.name }}</span>
+            <button 
+              class="delete-tag-btn" 
+              @click="deleteTag(tag.name)" 
+              title="Delete Tag"
+              aria-label="Delete Tag"
+            >
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M18 6L6 18M6 6l12 12"/>
               </svg>
             </button>
           </div>
-
-          <div class="modal-body">
-            <!-- Existing Tags -->
-            <div class="tags-list-container">
-              <h4 class="section-title">Current Tags</h4>
-              <div class="tags-grid">
-                <div 
-                  v-for="tag in props.tags" 
-                  :key="tag.name" 
-                  class="tag-item"
-                  :style="{ 
-                    backgroundColor: tag.color + '15', 
-                    borderColor: tag.color + '40', 
-                    color: tag.color 
-                  }"
-                >
-                  <span class="dot" :style="{ backgroundColor: tag.color }"></span>
-                  <span class="tag-name">{{ tag.name }}</span>
-                  <button 
-                    class="delete-tag-btn" 
-                    @click="deleteTag(tag.name)" 
-                    title="Delete Tag"
-                    aria-label="Delete Tag"
-                  >
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <path d="M18 6L6 18M6 6l12 12"/>
-                    </svg>
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            <!-- Create Tag Form -->
-            <form @submit.prevent="addTag" class="create-tag-form">
-              <h4 class="section-title">Create New Tag</h4>
-              <div class="form-group">
-                <label for="tag-name-input">Tag Name</label>
-                <input 
-                  id="tag-name-input"
-                  type="text" 
-                  v-model="newTagName" 
-                  placeholder="e.g. Work, Health, Shopping" 
-                  maxlength="20"
-                  required
-                />
-              </div>
-
-              <div class="form-group">
-                <label>Select Color</label>
-                <div class="color-picker-grid">
-                  <button 
-                    v-for="preset in colorPresets" 
-                    :key="preset.name"
-                    type="button"
-                    class="color-preset-btn"
-                    :class="{ active: newTagColor === preset.value }"
-                    :style="{ backgroundColor: preset.value }"
-                    @click="newTagColor = preset.value"
-                    :title="preset.name"
-                  >
-                    <svg v-if="newTagColor === preset.value" class="check-icon" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3">
-                      <polyline points="20 6 9 17 4 12"/>
-                    </svg>
-                  </button>
-                </div>
-              </div>
-
-              <button type="submit" class="primary w-full add-btn">
-                Add Tag
-              </button>
-            </form>
-          </div>
         </div>
       </div>
-    </Teleport>
+
+      <!-- Create Tag Form -->
+      <form @submit.prevent="addTag" class="create-tag-form">
+        <h4 class="section-title">Create New Tag</h4>
+        <div class="form-group">
+          <label for="tag-name-input">Tag Name</label>
+          <input 
+            id="tag-name-input"
+            type="text" 
+            v-model="newTagName" 
+            placeholder="e.g. Work, Health, Shopping" 
+            maxlength="20"
+            required
+          />
+        </div>
+
+        <div class="form-group">
+          <label>Select Color</label>
+          <div class="color-picker-grid">
+            <button 
+              v-for="preset in colorPresets" 
+              :key="preset.name"
+              type="button"
+              class="color-preset-btn"
+              :class="{ active: newTagColor === preset.value }"
+              :style="{ backgroundColor: preset.value }"
+              @click="newTagColor = preset.value"
+              :title="preset.name"
+            >
+              <svg v-if="newTagColor === preset.value" class="check-icon" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3">
+                <polyline points="20 6 9 17 4 12"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <button type="submit" class="primary w-full add-btn">
+          Add Tag
+        </button>
+      </form>
+    </div>
+
+    <!-- Modal View -->
+    <div v-else>
+      <button class="secondary w-full" @click="openModal">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M12 5v14M5 12h14"/>
+        </svg>
+        Manage Categories
+      </button>
+
+      <!-- Modal Backdrop -->
+      <Teleport to="body">
+        <div v-if="showModal" class="modal-backdrop" @click.self="closeModal">
+          <div class="glass-panel modal-content animate-pop-in">
+            <div class="modal-header">
+              <h3>Manage Categories</h3>
+              <button class="close-btn" @click="closeModal" aria-label="Close Modal">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M18 6L6 18M6 6l12 12"/>
+                </svg>
+              </button>
+            </div>
+
+            <div class="modal-body">
+              <!-- Existing Tags -->
+              <div class="tags-list-container">
+                <h4 class="section-title">Current Tags</h4>
+                <div class="tags-grid">
+                  <div 
+                    v-for="tag in props.tags" 
+                    :key="tag.name" 
+                    class="tag-item"
+                    :style="{ 
+                      backgroundColor: tag.color + '15', 
+                      borderColor: tag.color + '40', 
+                      color: tag.color 
+                    }"
+                  >
+                    <span class="dot" :style="{ backgroundColor: tag.color }"></span>
+                    <span class="tag-name">{{ tag.name }}</span>
+                    <button 
+                      class="delete-tag-btn" 
+                      @click="deleteTag(tag.name)" 
+                      title="Delete Tag"
+                      aria-label="Delete Tag"
+                    >
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M18 6L6 18M6 6l12 12"/>
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Create Tag Form -->
+              <form @submit.prevent="addTag" class="create-tag-form">
+                <h4 class="section-title">Create New Tag</h4>
+                <div class="form-group">
+                  <label for="tag-name-input-modal">Tag Name</label>
+                  <input 
+                    id="tag-name-input-modal"
+                    type="text" 
+                    v-model="newTagName" 
+                    placeholder="e.g. Work, Health, Shopping" 
+                    maxlength="20"
+                    required
+                  />
+                </div>
+
+                <div class="form-group">
+                  <label>Select Color</label>
+                  <div class="color-picker-grid">
+                    <button 
+                      v-for="preset in colorPresets" 
+                      :key="preset.name"
+                      type="button"
+                      class="color-preset-btn"
+                      :class="{ active: newTagColor === preset.value }"
+                      :style="{ backgroundColor: preset.value }"
+                      @click="newTagColor = preset.value"
+                      :title="preset.name"
+                    >
+                      <svg v-if="newTagColor === preset.value" class="check-icon" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3">
+                        <polyline points="20 6 9 17 4 12"/>
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+
+                <button type="submit" class="primary w-full add-btn">
+                  Add Tag
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+      </Teleport>
+    </div>
   </div>
 </template>
 
