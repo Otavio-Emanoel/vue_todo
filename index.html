@@ -4,10 +4,29 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>todo_list</title>
+    <meta name="color-scheme" content="light dark" />
+    <title>Sleek Task Flow</title>
+    <!-- Google Fonts: Outfit (Sans-Serif) & Fira Code (Monospace) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    <!-- Inline theme setup to prevent FOUC -->
+    <script>
+      {
+        const savedTheme = localStorage.getItem('todo-theme') || 'system';
+        if (savedTheme === 'dark' || (savedTheme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+          document.documentElement.style.colorScheme = 'dark';
+          document.documentElement.classList.add('dark-theme');
+        } else {
+          document.documentElement.style.colorScheme = 'light';
+          document.documentElement.classList.remove('dark-theme');
+        }
+      }
+    </script>
   </head>
   <body>
     <div id="app"></div>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>
+
