@@ -6,7 +6,7 @@ interface Tag {
   color: string;
 }
 
-const props = defineProps<{
+const props = withDefaults(defineProps<{
   totalTasks: number;
   completedTasks: number;
   pendingTasks: number;
@@ -19,7 +19,13 @@ const props = defineProps<{
   sortBy: string;
   
   tags: Tag[];
-}>();
+
+  showStatsOnly?: boolean;
+  showFiltersOnly?: boolean;
+}>(), {
+  showStatsOnly: false,
+  showFiltersOnly: false
+});
 
 const emit = defineEmits<{
   (e: 'update:statusFilter', val: 'all' | 'active' | 'completed'): void;
@@ -45,7 +51,7 @@ const strokeDashoffset = computed(() => {
 <template>
   <div class="dashboard flex-col">
     <!-- Stats Row -->
-    <div class="stats-panel glass-panel">
+    <div v-if="!props.showFiltersOnly" class="stats-panel glass-panel">
       <!-- Circular Progress Ring Widget -->
       <div class="progress-widget">
         <svg class="progress-ring" viewBox="0 0 80 80">
@@ -95,7 +101,7 @@ const strokeDashoffset = computed(() => {
     </div>
 
     <!-- Search & Sort Row -->
-    <div class="search-sort-row">
+    <div v-if="!props.showStatsOnly" class="search-sort-row">
       <div class="search-container">
         <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <circle cx="11" cy="11" r="8"/>
@@ -139,7 +145,7 @@ const strokeDashoffset = computed(() => {
     </div>
 
     <!-- Filter Bar Panel -->
-    <div class="filter-panel glass-panel">
+    <div v-if="!props.showStatsOnly" class="filter-panel glass-panel">
       <!-- Status Tabs -->
       <div class="filter-group">
         <span class="group-label">Status</span>

@@ -184,7 +184,7 @@ const handleAddSubtask = () => {
         <button 
           class="action-icon-btn focus-btn" 
           :class="{ active: props.isFocused }"
-          @click="emit('focus-task', props.task)" 
+          @click.stop="emit('focus-task', props.task)" 
           title="Focus on this task"
           aria-label="Focus on this task"
         >
@@ -195,7 +195,7 @@ const handleAddSubtask = () => {
         </button>
         <button 
           class="action-icon-btn edit-btn" 
-          @click="emit('edit-task', props.task)" 
+          @click.stop="emit('edit-task', props.task)" 
           title="Edit Task"
           aria-label="Edit Task"
         >
@@ -206,7 +206,7 @@ const handleAddSubtask = () => {
         </button>
         <button 
           class="action-icon-btn delete-btn" 
-          @click="emit('delete-task', props.task.id)" 
+          @click.stop="emit('delete-task', props.task.id)" 
           title="Delete Task"
           aria-label="Delete Task"
         >
@@ -219,7 +219,7 @@ const handleAddSubtask = () => {
         </button>
         <button 
           class="action-icon-btn expand-toggle-btn" 
-          @click="isExpanded = !isExpanded"
+          @click.stop="isExpanded = !isExpanded"
           :title="isExpanded ? 'Collapse' : 'Expand'"
           :aria-label="isExpanded ? 'Collapse' : 'Expand'"
         >
@@ -465,6 +465,7 @@ const handleAddSubtask = () => {
 .action-icon-btn svg {
   width: 16px;
   height: 16px;
+  pointer-events: none;
 }
 
 .focus-btn:hover, .focus-btn.active {
