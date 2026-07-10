@@ -146,6 +146,8 @@ const defaultTasks: Task[] = [
 const tasks = ref<Task[]>([]);
 const tags = ref<Tag[]>([]);
 const activeFocusTaskId = ref<string | null>(null);
+const activePage = ref<'tasks' | 'dashboard' | 'pomodoro' | 'tags'>('tasks');
+const pendingTasksList = computed(() => tasks.value.filter(t => !t.completed));
 
 // Form Control States
 const showForm = ref(false);
@@ -437,7 +439,11 @@ const filteredTasks = computed(() => {
           <span class="theme-mode-text">{{ isPinnedTheme ? 'Pinned' : 'Auto' }}</span>
         </button>
 
-        <button class="primary add-task-trigger" @click="handleAddTaskClick">
+        <button 
+          v-if="activePage === 'tasks'"
+          class="primary add-task-trigger" 
+          @click="handleAddTaskClick"
+        >
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="icon">
             <line x1="12" y1="5" x2="12" y2="19"/>
             <line x1="5" y1="12" x2="14" y2="12"/>
@@ -447,93 +453,196 @@ const filteredTasks = computed(() => {
       </div>
     </header>
 
-    <!-- Content Workspace Layout -->
-    <div class="glass-layout">
-      <!-- Sidebar Column -->
-      <aside class="sidebar-col flex-col">
-        <!-- Pomodoro Focus timer -->
-        <PomodoroTimer 
-          :active-task="activeFocusTask" 
-          @clear-active-task="handleClearFocus"
-        />
+    <!-- Navigation Tabs Bar -->
+    <nav class="app-nav glass-panel animate-pop-in">
+      <button 
+        class="nav-tab-btn" 
+        :class="{ active: activePage === 'tasks' }" 
+        @click="activePage = 'tasks'"
+      >
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M9 11l3 3L22 4"/>
+          <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+        </svg>
+        Tasks
+      </button>
+      <button 
+        class="nav-tab-btn" 
+        :class="{ active: activePage === 'dashboard' }" 
+        @click="activePage = 'dashboard'"
+      >
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M18 20V10M12 20V4M6 20v-6"/>
+        </svg>
+        Dashboard
+      </button>
+      <button 
+        class="nav-tab-btn" 
+        :class="{ active: activePage === 'pomodoro' }" 
+        @click="activePage = 'pomodoro'"
+      >
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"/>
+          <polyline points="12 6 12 12 16 14"/>
+        </svg>
+        Focus Timer
+      </button>
+      <button 
+        class="nav-tab-btn" 
+        :class="{ active: activePage === 'tags' }" 
+        @click="activePage = 'tags'"
+      >
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/>
+          <line x1="7" y1="7" x2="7.01" y2="7"/>
+        </svg>
+        Categories
+      </button>
+    </nav>
 
-        <!-- Category Tags Configuration -->
-        <div class="glass-panel sidebar-actions-panel">
-          <h4 class="sidebar-title">Categories</h4>
-          <p class="sidebar-desc">Manage custom task groupings and color markers.</p>
-          <TagsManager 
-            :tags="tags" 
-            @update-tags="updateTags"
+    <!-- Content Workspace Layout -->
+    <div class="glass-layout-tabs">
+      <div class="page-content-wrapper">
+        <!-- 1. Tasks Page -->
+        <main v-if="activePage === 'tasks'" class="main-col flex-col animate-pop-in">
+          <!-- Task Form (Collapsible Drawer) -->
+          <Transition name="form-slide">
+            <TaskForm 
+              v-if="showForm"
+              :tags="tags"
+              :task-to-edit="taskToEdit"
+              @submit-task="handleTaskSubmit"
+              @cancel="cancelForm"
+            />
+          </Transition>
+
+          <!-- Search & Filters -->
+          <Dashboard 
+            :total-tasks="totalTasksCount"
+            :completed-tasks="completedTasksCount"
+            :pending-tasks="pendingTasksCount"
+            :high-priority-tasks="highPriorityTasksCount"
+            
+            v-model:statusFilter="statusFilter"
+            v-model:priorityFilter="priorityFilter"
+            v-model:tagFilter="tagFilter"
+            v-model:searchQuery="searchQuery"
+            v-model:sortBy="sortBy"
+            
+            :tags="tags"
+            :show-filters-only="true"
+          />
+
+          <!-- Tasks Feed list -->
+          <div class="tasks-feed-container">
+            <TransitionGroup name="task-list" tag="div" class="tasks-transition-group">
+              <TaskItem 
+                v-for="task in filteredTasks"
+                :key="task.id"
+                :task="task"
+                :tags="tags"
+                :is-focused="activeFocusTaskId === task.id"
+                @toggle-complete="toggleComplete"
+                @edit-task="handleEditTaskClick"
+                @delete-task="deleteTask"
+                @focus-task="handleFocusTask"
+                @toggle-subtask="toggleSubtask"
+                @add-subtask="addSubtask"
+                @delete-subtask="deleteSubtask"
+              />
+            </TransitionGroup>
+
+            <!-- Empty list state -->
+            <div v-if="filteredTasks.length === 0" class="empty-state glass-panel animate-pop-in">
+              <svg class="empty-icon" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="1.5">
+                <circle cx="12" cy="12" r="10"/>
+                <path d="M8 12h8"/>
+              </svg>
+              <h4>No tasks found</h4>
+              <p>Try clearing filters or add a brand-new task to get started.</p>
+              <button 
+                v-if="statusFilter !== 'all' || priorityFilter !== 'all' || tagFilter !== 'all' || searchQuery"
+                class="secondary" 
+                @click="statusFilter = 'all'; priorityFilter = 'all'; tagFilter = 'all'; searchQuery = ''"
+              >
+                Reset Filters
+              </button>
+            </div>
+          </div>
+        </main>
+
+        <!-- 2. Dashboard Page -->
+        <div v-else-if="activePage === 'dashboard'" class="main-col flex-col animate-pop-in">
+          <Dashboard 
+            :total-tasks="totalTasksCount"
+            :completed-tasks="completedTasksCount"
+            :pending-tasks="pendingTasksCount"
+            :high-priority-tasks="highPriorityTasksCount"
+            
+            v-model:statusFilter="statusFilter"
+            v-model:priorityFilter="priorityFilter"
+            v-model:tagFilter="tagFilter"
+            v-model:searchQuery="searchQuery"
+            v-model:sortBy="sortBy"
+            
+            :tags="tags"
+            :show-stats-only="true"
           />
         </div>
-      </aside>
 
-      <!-- Main Column -->
-      <main class="main-col flex-col">
-        <!-- Task Form (Collasible Drawer) -->
-        <Transition name="form-slide">
-          <TaskForm 
-            v-if="showForm"
-            :tags="tags"
-            :task-to-edit="taskToEdit"
-            @submit-task="handleTaskSubmit"
-            @cancel="cancelForm"
-          />
-        </Transition>
-
-        <!-- Stats and Filters Dashboard -->
-        <Dashboard 
-          :total-tasks="totalTasksCount"
-          :completed-tasks="completedTasksCount"
-          :pending-tasks="pendingTasksCount"
-          :high-priority-tasks="highPriorityTasksCount"
-          
-          v-model:statusFilter="statusFilter"
-          v-model:priorityFilter="priorityFilter"
-          v-model:tagFilter="tagFilter"
-          v-model:searchQuery="searchQuery"
-          v-model:sortBy="sortBy"
-          
-          :tags="tags"
-        />
-
-        <!-- Tasks Feed list -->
-        <div class="tasks-feed-container">
-          <TransitionGroup name="task-list" tag="div" class="tasks-transition-group">
-            <TaskItem 
-              v-for="task in filteredTasks"
-              :key="task.id"
-              :task="task"
-              :tags="tags"
-              :is-focused="activeFocusTaskId === task.id"
-              @toggle-complete="toggleComplete"
-              @edit-task="handleEditTaskClick"
-              @delete-task="deleteTask"
-              @focus-task="handleFocusTask"
-              @toggle-subtask="toggleSubtask"
-              @add-subtask="addSubtask"
-              @delete-subtask="deleteSubtask"
+        <!-- 3. Pomodoro Focus Timer Page -->
+        <div v-else-if="activePage === 'pomodoro'" class="pomodoro-page-layout animate-pop-in">
+          <div class="pomodoro-grid">
+            <PomodoroTimer 
+              :active-task="activeFocusTask" 
+              @clear-active-task="handleClearFocus"
             />
-          </TransitionGroup>
-
-          <!-- Empty list state -->
-          <div v-if="filteredTasks.length === 0" class="empty-state glass-panel animate-pop-in">
-            <svg class="empty-icon" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="1.5">
-              <circle cx="12" cy="12" r="10"/>
-              <path d="M8 12h8"/>
-            </svg>
-            <h4>No tasks found</h4>
-            <p>Try clearing filters or add a brand-new task to get started.</p>
-            <button 
-              v-if="statusFilter !== 'all' || priorityFilter !== 'all' || tagFilter !== 'all' || searchQuery"
-              class="secondary" 
-              @click="statusFilter = 'all'; priorityFilter = 'all'; tagFilter = 'all'; searchQuery = ''"
-            >
-              Reset Filters
-            </button>
+            
+            <!-- Quick-select Focus List -->
+            <div class="pending-focus-panel glass-panel">
+              <h3 class="panel-title">Focus on a Pending Task</h3>
+              <p class="panel-subtitle">Select a task from your list to activate focused tracking.</p>
+              <div v-if="pendingTasksList.length === 0" class="empty-pending-focus">
+                <svg class="empty-focus-icon" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="1.5">
+                  <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+                </svg>
+                <p>All tasks are completed! Excellent work.</p>
+              </div>
+              <div v-else class="focus-tasks-list">
+                <div 
+                  v-for="task in pendingTasksList" 
+                  :key="task.id" 
+                  class="focus-task-item glass-panel"
+                  :class="{ active: activeFocusTaskId === task.id }"
+                >
+                  <div class="focus-task-info">
+                    <span class="focus-task-title-text">{{ task.title }}</span>
+                    <span class="focus-task-priority" :class="task.priority">{{ task.priority }} priority</span>
+                  </div>
+                  <button 
+                    class="focus-btn-action"
+                    :class="activeFocusTaskId === task.id ? 'danger' : 'primary'"
+                    @click="activeFocusTaskId === task.id ? handleClearFocus() : handleFocusTask(task)"
+                  >
+                    {{ activeFocusTaskId === task.id ? 'Unfocus' : 'Focus' }}
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
-      </main>
+
+        <!-- 4. Categories Management Page -->
+        <div v-else-if="activePage === 'tags'" class="tags-page-layout animate-pop-in">
+          <div class="glass-panel">
+            <TagsManager 
+              :tags="tags" 
+              :inline="true"
+              @update-tags="updateTags"
+            />
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -677,6 +786,189 @@ const filteredTasks = computed(() => {
 
 .task-list-move {
   transition: transform 0.4s cubic-bezier(0.3, 0.85, 0.4, 1.1);
+}
+
+/* Navigation Tabs styling */
+.app-nav {
+  display: flex;
+  gap: 8px;
+  padding: 0.5rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.nav-tab-btn {
+  flex: 1;
+  min-width: 120px;
+  min-height: 44px;
+  background-color: transparent;
+  color: var(--text-muted);
+  border: 1px solid transparent;
+  border-radius: 12px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.nav-tab-btn:hover {
+  background-color: oklch(from var(--text) l c h / 0.05);
+  color: var(--text-heading);
+}
+
+.nav-tab-btn.active {
+  background-color: var(--card-bg);
+  border-color: var(--border);
+  color: var(--accent);
+  box-shadow: var(--shadow);
+}
+
+.nav-tab-btn .icon {
+  width: 18px;
+  height: 18px;
+}
+
+/* Tabs layout wrapper */
+.glass-layout-tabs {
+  width: 100%;
+}
+
+.page-content-wrapper {
+  width: 100%;
+}
+
+/* Pomodoro page styles */
+.pomodoro-page-layout {
+  width: 100%;
+}
+
+.pomodoro-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2rem;
+}
+
+@media (min-width: 800px) {
+  .pomodoro-grid {
+    grid-template-columns: 380px 1fr;
+  }
+}
+
+.pending-focus-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.panel-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text-heading);
+}
+
+.panel-subtitle {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin-bottom: 0.5rem;
+}
+
+.focus-tasks-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  max-height: 450px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.focus-task-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  gap: 1rem;
+  border-radius: 12px;
+  transition: all 0.25s ease;
+}
+
+.focus-task-item.active {
+  border-color: var(--accent);
+  box-shadow: 0 0 10px oklch(from var(--accent) l c h / 0.1);
+}
+
+.focus-task-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.focus-task-title-text {
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: var(--text-heading);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.focus-task-priority {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.focus-task-priority.high {
+  color: var(--danger);
+}
+
+.focus-task-priority.medium {
+  color: var(--warning);
+}
+
+.focus-task-priority.low {
+  color: var(--success);
+}
+
+.focus-btn-action {
+  flex-shrink: 0;
+  min-height: 36px;
+  padding-inline: 12px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.empty-pending-focus {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem 1rem;
+  text-align: center;
+  color: var(--text-muted);
+  gap: 0.75rem;
+}
+
+.empty-focus-icon {
+  width: 48px;
+  height: 48px;
+}
+
+/* Category Tags Manager inline styles */
+.tags-manager-inline {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.flex-col-inline {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
 }
 
 @media (max-width: 768px) {
