@@ -503,145 +503,149 @@ const filteredTasks = computed(() => {
     <!-- Content Workspace Layout -->
     <div class="glass-layout-tabs">
       <div class="page-content-wrapper">
-        <!-- 1. Tasks Page -->
-        <main v-if="activePage === 'tasks'" class="main-col flex-col animate-pop-in">
-          <!-- Task Form (Collapsible Drawer) -->
-          <Transition name="form-slide">
-            <TaskForm 
-              v-if="showForm"
-              :tags="tags"
-              :task-to-edit="taskToEdit"
-              @submit-task="handleTaskSubmit"
-              @cancel="cancelForm"
-            />
-          </Transition>
-
-          <!-- Search & Filters -->
-          <Dashboard 
-            :total-tasks="totalTasksCount"
-            :completed-tasks="completedTasksCount"
-            :pending-tasks="pendingTasksCount"
-            :high-priority-tasks="highPriorityTasksCount"
-            
-            v-model:statusFilter="statusFilter"
-            v-model:priorityFilter="priorityFilter"
-            v-model:tagFilter="tagFilter"
-            v-model:searchQuery="searchQuery"
-            v-model:sortBy="sortBy"
-            
-            :tags="tags"
-            :show-filters-only="true"
-          />
-
-          <!-- Tasks Feed list -->
-          <div class="tasks-feed-container">
-            <TransitionGroup name="task-list" tag="div" class="tasks-transition-group">
-              <TaskItem 
-                v-for="task in filteredTasks"
-                :key="task.id"
-                :task="task"
+        <Transition name="page-fade" mode="out-in">
+          <!-- 1. Tasks Page -->
+          <main v-if="activePage === 'tasks'" :key="'tasks'" class="main-col flex-col">
+            <!-- Task Form (Collapsible Drawer) -->
+            <Transition name="form-slide">
+              <TaskForm 
+                v-if="showForm"
                 :tags="tags"
-                :is-focused="activeFocusTaskId === task.id"
-                @toggle-complete="toggleComplete"
-                @edit-task="handleEditTaskClick"
-                @delete-task="deleteTask"
-                @focus-task="handleFocusTask"
-                @toggle-subtask="toggleSubtask"
-                @add-subtask="addSubtask"
-                @delete-subtask="deleteSubtask"
+                :task-to-edit="taskToEdit"
+                @submit-task="handleTaskSubmit"
+                @cancel="cancelForm"
               />
-            </TransitionGroup>
+            </Transition>
 
-            <!-- Empty list state -->
-            <div v-if="filteredTasks.length === 0" class="empty-state glass-panel animate-pop-in">
-              <svg class="empty-icon" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="1.5">
-                <circle cx="12" cy="12" r="10"/>
-                <path d="M8 12h8"/>
-              </svg>
-              <h4>No tasks found</h4>
-              <p>Try clearing filters or add a brand-new task to get started.</p>
-              <button 
-                v-if="statusFilter !== 'all' || priorityFilter !== 'all' || tagFilter !== 'all' || searchQuery"
-                class="secondary" 
-                @click="statusFilter = 'all'; priorityFilter = 'all'; tagFilter = 'all'; searchQuery = ''"
-              >
-                Reset Filters
-              </button>
-            </div>
-          </div>
-        </main>
-
-        <!-- 2. Dashboard Page -->
-        <div v-else-if="activePage === 'dashboard'" class="main-col flex-col animate-pop-in">
-          <Dashboard 
-            :total-tasks="totalTasksCount"
-            :completed-tasks="completedTasksCount"
-            :pending-tasks="pendingTasksCount"
-            :high-priority-tasks="highPriorityTasksCount"
-            
-            v-model:statusFilter="statusFilter"
-            v-model:priorityFilter="priorityFilter"
-            v-model:tagFilter="tagFilter"
-            v-model:searchQuery="searchQuery"
-            v-model:sortBy="sortBy"
-            
-            :tags="tags"
-            :show-stats-only="true"
-          />
-        </div>
-
-        <!-- 3. Pomodoro Focus Timer Page -->
-        <div v-else-if="activePage === 'pomodoro'" class="pomodoro-page-layout animate-pop-in">
-          <div class="pomodoro-grid">
-            <PomodoroTimer 
-              :active-task="activeFocusTask" 
-              @clear-active-task="handleClearFocus"
+            <!-- Search & Filters -->
+            <Dashboard 
+              :tasks="tasks"
+              :total-tasks="totalTasksCount"
+              :completed-tasks="completedTasksCount"
+              :pending-tasks="pendingTasksCount"
+              :high-priority-tasks="highPriorityTasksCount"
+              
+              v-model:statusFilter="statusFilter"
+              v-model:priorityFilter="priorityFilter"
+              v-model:tagFilter="tagFilter"
+              v-model:searchQuery="searchQuery"
+              v-model:sortBy="sortBy"
+              
+              :tags="tags"
+              :show-filters-only="true"
             />
-            
-            <!-- Quick-select Focus List -->
-            <div class="pending-focus-panel glass-panel">
-              <h3 class="panel-title">Focus on a Pending Task</h3>
-              <p class="panel-subtitle">Select a task from your list to activate focused tracking.</p>
-              <div v-if="pendingTasksList.length === 0" class="empty-pending-focus">
-                <svg class="empty-focus-icon" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="1.5">
-                  <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+
+            <!-- Tasks Feed list -->
+            <div class="tasks-feed-container">
+              <TransitionGroup name="task-list" tag="div" class="tasks-transition-group">
+                <TaskItem 
+                  v-for="task in filteredTasks"
+                  :key="task.id"
+                  :task="task"
+                  :tags="tags"
+                  :is-focused="activeFocusTaskId === task.id"
+                  @toggle-complete="toggleComplete"
+                  @edit-task="handleEditTaskClick"
+                  @delete-task="deleteTask"
+                  @focus-task="handleFocusTask"
+                  @toggle-subtask="toggleSubtask"
+                  @add-subtask="addSubtask"
+                  @delete-subtask="deleteSubtask"
+                />
+              </TransitionGroup>
+
+              <!-- Empty list state -->
+              <div v-if="filteredTasks.length === 0" class="empty-state glass-panel animate-pop-in">
+                <svg class="empty-icon" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="1.5">
+                  <circle cx="12" cy="12" r="10"/>
+                  <path d="M8 12h8"/>
                 </svg>
-                <p>All tasks are completed! Excellent work.</p>
-              </div>
-              <div v-else class="focus-tasks-list">
-                <div 
-                  v-for="task in pendingTasksList" 
-                  :key="task.id" 
-                  class="focus-task-item glass-panel"
-                  :class="{ active: activeFocusTaskId === task.id }"
+                <h4>No tasks found</h4>
+                <p>Try clearing filters or add a brand-new task to get started.</p>
+                <button 
+                  v-if="statusFilter !== 'all' || priorityFilter !== 'all' || tagFilter !== 'all' || searchQuery"
+                  class="secondary" 
+                  @click="statusFilter = 'all'; priorityFilter = 'all'; tagFilter = 'all'; searchQuery = ''"
                 >
-                  <div class="focus-task-info">
-                    <span class="focus-task-title-text">{{ task.title }}</span>
-                    <span class="focus-task-priority" :class="task.priority">{{ task.priority }} priority</span>
-                  </div>
-                  <button 
-                    class="focus-btn-action"
-                    :class="activeFocusTaskId === task.id ? 'danger' : 'primary'"
-                    @click="activeFocusTaskId === task.id ? handleClearFocus() : handleFocusTask(task)"
+                  Reset Filters
+                </button>
+              </div>
+            </div>
+          </main>
+
+          <!-- 2. Dashboard Page -->
+          <div v-else-if="activePage === 'dashboard'" :key="'dashboard'" class="main-col flex-col">
+            <Dashboard 
+              :tasks="tasks"
+              :total-tasks="totalTasksCount"
+              :completed-tasks="completedTasksCount"
+              :pending-tasks="pendingTasksCount"
+              :high-priority-tasks="highPriorityTasksCount"
+              
+              v-model:statusFilter="statusFilter"
+              v-model:priorityFilter="priorityFilter"
+              v-model:tagFilter="tagFilter"
+              v-model:searchQuery="searchQuery"
+              v-model:sortBy="sortBy"
+              
+              :tags="tags"
+              :show-stats-only="true"
+            />
+          </div>
+
+          <!-- 3. Pomodoro Focus Timer Page -->
+          <div v-else-if="activePage === 'pomodoro'" :key="'pomodoro'" class="pomodoro-page-layout">
+            <div class="pomodoro-grid">
+              <PomodoroTimer 
+                :active-task="activeFocusTask" 
+                @clear-active-task="handleClearFocus"
+              />
+              
+              <!-- Quick-select Focus List -->
+              <div class="pending-focus-panel glass-panel">
+                <h3 class="panel-title">Focus on a Pending Task</h3>
+                <p class="panel-subtitle">Select a task from your list to activate focused tracking.</p>
+                <div v-if="pendingTasksList.length === 0" class="empty-pending-focus">
+                  <svg class="empty-focus-icon" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="1.5">
+                    <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+                  </svg>
+                  <p>All tasks are completed! Excellent work.</p>
+                </div>
+                <div v-else class="focus-tasks-list">
+                  <div 
+                    v-for="task in pendingTasksList" 
+                    :key="task.id" 
+                    class="focus-task-item glass-panel"
+                    :class="{ active: activeFocusTaskId === task.id }"
                   >
-                    {{ activeFocusTaskId === task.id ? 'Unfocus' : 'Focus' }}
-                  </button>
+                    <div class="focus-task-info">
+                      <span class="focus-task-title-text">{{ task.title }}</span>
+                      <span class="focus-task-priority" :class="task.priority">{{ task.priority }} priority</span>
+                    </div>
+                    <button 
+                      class="focus-btn-action"
+                      :class="activeFocusTaskId === task.id ? 'danger' : 'primary'"
+                      @click="activeFocusTaskId === task.id ? handleClearFocus() : handleFocusTask(task)"
+                    >
+                      {{ activeFocusTaskId === task.id ? 'Unfocus' : 'Focus' }}
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
-        </div>
 
-        <!-- 4. Categories Management Page -->
-        <div v-else-if="activePage === 'tags'" class="tags-page-layout animate-pop-in">
-          <div class="glass-panel">
-            <TagsManager 
-              :tags="tags" 
-              :inline="true"
-              @update-tags="updateTags"
-            />
+          <!-- 4. Categories Management Page -->
+          <div v-else-if="activePage === 'tags'" :key="'tags'" class="tags-page-layout">
+            <div class="glass-panel">
+              <TagsManager 
+                :tags="tags" 
+                :inline="true"
+                @update-tags="updateTags"
+              />
+            </div>
           </div>
-        </div>
+        </Transition>
       </div>
     </div>
   </div>
@@ -969,6 +973,22 @@ const filteredTasks = computed(() => {
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
+}
+
+/* Page Transition Animations */
+.page-fade-enter-active,
+.page-fade-leave-active {
+  transition: opacity 0.22s ease, transform 0.22s ease;
+}
+
+.page-fade-enter-from {
+  opacity: 0;
+  transform: translateY(8px);
+}
+
+.page-fade-leave-to {
+  opacity: 0;
+  transform: translateY(-8px);
 }
 
 @media (max-width: 768px) {
