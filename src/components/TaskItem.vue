@@ -237,70 +237,74 @@ const handleAddSubtask = () => {
     </div>
 
     <!-- Collapsible Secondary Content Panel -->
-    <div v-show="isExpanded" class="task-secondary-row animate-pop-in">
-      <!-- Description Section -->
-      <div v-if="props.task.description" class="task-description">
-        <h5>Notes</h5>
-        <p>{{ props.task.description }}</p>
-      </div>
+    <Transition name="expand">
+      <div v-show="isExpanded" class="task-secondary-row">
+        <div class="expand-inner">
+          <!-- Description Section -->
+          <div v-if="props.task.description" class="task-description">
+            <h5>Notes</h5>
+            <p>{{ props.task.description }}</p>
+          </div>
 
-      <!-- Subtasks Checklist Section -->
-      <div class="subtasks-section">
-        <div class="subtasks-header">
-          <h5>Subtasks</h5>
-          <span v-if="totalSubtasksCount > 0" class="subtask-progress-lbl">
-            {{ completedSubtasksCount }} of {{ totalSubtasksCount }} completed ({{ subtaskProgressPercent }}%)
-          </span>
-        </div>
+          <!-- Subtasks Checklist Section -->
+          <div class="subtasks-section">
+            <div class="subtasks-header">
+              <h5>Subtasks</h5>
+              <span v-if="totalSubtasksCount > 0" class="subtask-progress-lbl">
+                {{ completedSubtasksCount }} of {{ totalSubtasksCount }} completed ({{ subtaskProgressPercent }}%)
+              </span>
+            </div>
 
-        <!-- Subtask Progress Bar -->
-        <div v-if="totalSubtasksCount > 0" class="subtask-progress-bar-container">
-          <div class="subtask-progress-bar-fill" :style="{ width: subtaskProgressPercent + '%' }"></div>
-        </div>
+            <!-- Subtask Progress Bar -->
+            <div v-if="totalSubtasksCount > 0" class="subtask-progress-bar-container">
+              <div class="subtask-progress-bar-fill" :style="{ width: subtaskProgressPercent + '%' }"></div>
+            </div>
 
-        <!-- Subtask list -->
-        <div class="subtasks-list">
-          <div 
-            v-for="subtask in props.task.subtasks" 
-            :key="subtask.id" 
-            class="subtask-item"
-            :class="{ 'subtask-completed': subtask.completed }"
-          >
-            <label class="subtask-label">
+            <!-- Subtask list -->
+            <TransitionGroup name="subtask-list" tag="div" class="subtasks-list">
+              <div 
+                v-for="subtask in props.task.subtasks" 
+                :key="subtask.id" 
+                class="subtask-item"
+                :class="{ 'subtask-completed': subtask.completed }"
+              >
+                <label class="subtask-label">
+                  <input 
+                    type="checkbox" 
+                    :checked="subtask.completed"
+                    @change="emit('toggle-subtask', props.task.id, subtask.id)"
+                  />
+                  <span class="subtask-title-text">{{ subtask.title }}</span>
+                </label>
+                <button 
+                  class="delete-subtask-btn" 
+                  @click="emit('delete-subtask', props.task.id, subtask.id)"
+                  title="Delete Subtask"
+                  aria-label="Delete Subtask"
+                >
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M18 6L6 18M6 6l12 12"/>
+                  </svg>
+                </button>
+              </div>
+            </TransitionGroup>
+
+            <!-- Quick Subtask Creator -->
+            <form @submit.prevent="handleAddSubtask" class="add-subtask-form">
               <input 
-                type="checkbox" 
-                :checked="subtask.completed"
-                @change="emit('toggle-subtask', props.task.id, subtask.id)"
+                type="text" 
+                v-model="newSubtaskTitle"
+                placeholder="Add a step to this task..."
+                aria-label="Add subtask text"
               />
-              <span class="subtask-title-text">{{ subtask.title }}</span>
-            </label>
-            <button 
-              class="delete-subtask-btn" 
-              @click="emit('delete-subtask', props.task.id, subtask.id)"
-              title="Delete Subtask"
-              aria-label="Delete Subtask"
-            >
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M18 6L6 18M6 6l12 12"/>
-              </svg>
-            </button>
+              <button type="submit" class="secondary subtask-add-btn">
+                Add
+              </button>
+            </form>
           </div>
         </div>
-
-        <!-- Quick Subtask Creator -->
-        <form @submit.prevent="handleAddSubtask" class="add-subtask-form">
-          <input 
-            type="text" 
-            v-model="newSubtaskTitle"
-            placeholder="Add a step to this task..."
-            aria-label="Add subtask text"
-          />
-          <button type="submit" class="secondary subtask-add-btn">
-            Add
-          </button>
-        </form>
       </div>
-    </div>
+    </Transition>
   </div>
 </template>
 
@@ -491,6 +495,12 @@ const handleAddSubtask = () => {
   margin-top: 1rem;
   padding-top: 1rem;
   border-top: 1px solid var(--border);
+  display: grid;
+  grid-template-rows: 1fr;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.expand-inner {
   display: flex;
   flex-direction: column;
   gap: 1rem;

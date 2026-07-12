@@ -216,13 +216,13 @@ button.primary {
 }
 
 button.primary:hover:not(:disabled) {
-  transform: translateY(-1px);
+  transform: translateY(-1px) scale(1.02);
   box-shadow: 0 6px 20px oklch(from var(--accent) l c h / 0.5);
   filter: brightness(1.05);
 }
 
 button.primary:active:not(:disabled) {
-  transform: translateY(0);
+  transform: translateY(0) scale(0.97);
 }
 
 button.secondary {
@@ -233,6 +233,11 @@ button.secondary {
 
 button.secondary:hover:not(:disabled) {
   background-color: var(--border);
+  transform: translateY(-1px) scale(1.02);
+}
+
+button.secondary:active:not(:disabled) {
+  transform: translateY(0) scale(0.97);
 }
 
 button.danger {
@@ -245,6 +250,11 @@ button.danger:hover:not(:disabled) {
   background-color: var(--danger);
   color: #fff;
   box-shadow: 0 4px 12px oklch(from var(--danger) l c h / 0.2);
+  transform: translateY(-1px) scale(1.02);
+}
+
+button.danger:active:not(:disabled) {
+  transform: translateY(0) scale(0.97);
 }
 
 button:disabled {
@@ -388,6 +398,110 @@ input[type="checkbox"] {
 
 .pulse-timer {
   animation: timerPulse 2s infinite;
+}
+
+/* Reusable Dynamic Auto-Height Expansion Transition */
+.expand-enter-active,
+.expand-leave-active {
+  transition: grid-template-rows 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.25s ease, padding 0.3s ease, margin 0.3s ease;
+  display: grid !important;
+  grid-template-rows: 1fr;
+}
+
+.expand-enter-from,
+.expand-leave-to {
+  grid-template-rows: 0fr;
+  opacity: 0;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+  border-top-color: transparent !important;
+}
+
+.expand-inner {
+  grid-row: 1 / span 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* Subtask List Transitions */
+.subtasks-list {
+  position: relative;
+}
+
+.subtask-list-enter-active,
+.subtask-list-leave-active {
+  transition: all 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.subtask-list-enter-from {
+  opacity: 0;
+  transform: translateY(-8px);
+}
+
+.subtask-list-leave-to {
+  opacity: 0;
+  transform: translateX(24px);
+}
+
+.subtask-list-leave-active {
+  position: absolute;
+  width: 100%;
+  z-index: 0;
+}
+
+.subtask-list-move {
+  transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Tag List Transitions */
+.tags-grid {
+  position: relative;
+}
+
+.tag-list-enter-active,
+.tag-list-leave-active {
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.tag-list-enter-from {
+  opacity: 0;
+  transform: scale(0.85);
+}
+
+.tag-list-leave-to {
+  opacity: 0;
+  transform: scale(0.85);
+}
+
+.tag-list-leave-active {
+  position: absolute;
+}
+
+.tag-list-move {
+  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Modal Fade-Scale Transitions */
+.modal-enter-active,
+.modal-leave-active {
+  transition: opacity 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.modal-enter-from,
+.modal-leave-to {
+  opacity: 0;
+}
+
+.modal-enter-active .modal-content,
+.modal-leave-active .modal-content {
+  transition: transform 0.28s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.modal-enter-from .modal-content,
+.modal-leave-to .modal-content {
+  transform: scale(0.9) translateY(12px);
 }
 
 /* Responsive utilities */

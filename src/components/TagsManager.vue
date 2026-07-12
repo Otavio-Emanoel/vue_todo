@@ -74,7 +74,7 @@ const deleteTag = (tagName: string) => {
       <!-- Existing Tags -->
       <div class="tags-list-container">
         <h4 class="section-title">Current Tags</h4>
-        <div class="tags-grid">
+        <TransitionGroup name="tag-list" tag="div" class="tags-grid">
           <div 
             v-for="tag in props.tags" 
             :key="tag.name" 
@@ -98,7 +98,7 @@ const deleteTag = (tagName: string) => {
               </svg>
             </button>
           </div>
-        </div>
+        </TransitionGroup>
       </div>
 
       <!-- Create Tag Form -->
@@ -153,47 +153,48 @@ const deleteTag = (tagName: string) => {
 
       <!-- Modal Backdrop -->
       <Teleport to="body">
-        <div v-if="showModal" class="modal-backdrop" @click.self="closeModal">
-          <div class="glass-panel modal-content animate-pop-in">
-            <div class="modal-header">
-              <h3>Manage Categories</h3>
-              <button class="close-btn" @click="closeModal" aria-label="Close Modal">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M18 6L6 18M6 6l12 12"/>
-                </svg>
-              </button>
-            </div>
-
-            <div class="modal-body">
-              <!-- Existing Tags -->
-              <div class="tags-list-container">
-                <h4 class="section-title">Current Tags</h4>
-                <div class="tags-grid">
-                  <div 
-                    v-for="tag in props.tags" 
-                    :key="tag.name" 
-                    class="tag-item"
-                    :style="{ 
-                      backgroundColor: tag.color + '15', 
-                      borderColor: tag.color + '40', 
-                      color: tag.color 
-                    }"
-                  >
-                    <span class="dot" :style="{ backgroundColor: tag.color }"></span>
-                    <span class="tag-name">{{ tag.name }}</span>
-                    <button 
-                      class="delete-tag-btn" 
-                      @click="deleteTag(tag.name)" 
-                      title="Delete Tag"
-                      aria-label="Delete Tag"
-                    >
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M18 6L6 18M6 6l12 12"/>
-                      </svg>
-                    </button>
-                  </div>
-                </div>
+        <Transition name="modal">
+          <div v-if="showModal" class="modal-backdrop" @click.self="closeModal">
+            <div class="glass-panel modal-content">
+              <div class="modal-header">
+                <h3>Manage Categories</h3>
+                <button class="close-btn" @click="closeModal" aria-label="Close Modal">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M18 6L6 18M6 6l12 12"/>
+                  </svg>
+                </button>
               </div>
+
+              <div class="modal-body">
+                <!-- Existing Tags -->
+                <div class="tags-list-container">
+                  <h4 class="section-title">Current Tags</h4>
+                  <TransitionGroup name="tag-list" tag="div" class="tags-grid">
+                    <div 
+                      v-for="tag in props.tags" 
+                      :key="tag.name" 
+                      class="tag-item"
+                      :style="{ 
+                        backgroundColor: tag.color + '15', 
+                        borderColor: tag.color + '40', 
+                        color: tag.color 
+                      }"
+                    >
+                      <span class="dot" :style="{ backgroundColor: tag.color }"></span>
+                      <span class="tag-name">{{ tag.name }}</span>
+                      <button 
+                        class="delete-tag-btn" 
+                        @click="deleteTag(tag.name)" 
+                        title="Delete Tag"
+                        aria-label="Delete Tag"
+                      >
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                          <path d="M18 6L6 18M6 6l12 12"/>
+                        </svg>
+                      </button>
+                    </div>
+                  </TransitionGroup>
+                </div>
 
               <!-- Create Tag Form -->
               <form @submit.prevent="addTag" class="create-tag-form">
@@ -237,9 +238,10 @@ const deleteTag = (tagName: string) => {
             </div>
           </div>
         </div>
-      </Teleport>
-    </div>
+      </Transition>
+    </Teleport>
   </div>
+</div>
 </template>
 
 <style scoped>

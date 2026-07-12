@@ -756,40 +756,42 @@ const filteredTasks = computed(() => {
    ---------------------------------------------------- */
 
 /* Task Form slide transition */
-.form-slide-enter-active,
+.form-slide-enter-active {
+  transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
 .form-slide-leave-active {
-  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .form-slide-enter-from,
 .form-slide-leave-to {
   opacity: 0;
-  transform: translateY(-20px);
+  transform: translateY(-30px) scale(0.98);
 }
 
 /* List Transitions */
-.task-list-enter-active,
+.task-list-enter-active {
+  transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
 .task-list-leave-active {
-  transition: all 0.4s cubic-bezier(0.3, 0.85, 0.4, 1.1);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: absolute;
+  width: 100%;
+  z-index: 0;
 }
 
 .task-list-enter-from {
   opacity: 0;
-  transform: translateY(20px);
+  transform: translateY(24px) scale(0.97);
 }
 
 .task-list-leave-to {
   opacity: 0;
-  transform: translateX(40px);
-}
-
-.task-list-leave-active {
-  position: absolute;
-  width: 100%;
+  transform: translateX(48px) scale(0.97);
 }
 
 .task-list-move {
-  transition: transform 0.4s cubic-bezier(0.3, 0.85, 0.4, 1.1);
+  transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 /* Navigation Tabs styling */
@@ -809,7 +811,7 @@ const filteredTasks = computed(() => {
   color: var(--text-muted);
   border: 1px solid transparent;
   border-radius: 12px;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -819,8 +821,9 @@ const filteredTasks = computed(() => {
 }
 
 .nav-tab-btn:hover {
-  background-color: oklch(from var(--text) l c h / 0.05);
+  background-color: oklch(from var(--text) l c h / 0.04);
   color: var(--text-heading);
+  transform: translateY(-1px);
 }
 
 .nav-tab-btn.active {
@@ -828,6 +831,7 @@ const filteredTasks = computed(() => {
   border-color: var(--border);
   color: var(--accent);
   box-shadow: var(--shadow);
+  transform: scale(1.02);
 }
 
 .nav-tab-btn .icon {
@@ -976,19 +980,21 @@ const filteredTasks = computed(() => {
 }
 
 /* Page Transition Animations */
-.page-fade-enter-active,
+.page-fade-enter-active {
+  transition: opacity 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
 .page-fade-leave-active {
-  transition: opacity 0.22s ease, transform 0.22s ease;
+  transition: opacity 0.2s cubic-bezier(0.4, 0, 1, 1), transform 0.2s cubic-bezier(0.4, 0, 1, 1);
 }
 
 .page-fade-enter-from {
   opacity: 0;
-  transform: translateY(8px);
+  transform: scale(0.98) translateY(12px);
 }
 
 .page-fade-leave-to {
   opacity: 0;
-  transform: translateY(-8px);
+  transform: scale(0.98) translateY(-12px);
 }
 
 @media (max-width: 768px) {
