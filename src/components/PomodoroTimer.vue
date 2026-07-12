@@ -290,6 +290,39 @@ onUnmounted(() => {
         </svg>
         Reset
       </button>
+      <button 
+        class="secondary mute-btn" 
+        @click="isMuted = !isMuted"
+        :title="isMuted ? 'Unmute alerts' : 'Mute alerts'"
+        :aria-label="isMuted ? 'Unmute alerts' : 'Mute alerts'"
+      >
+        <svg v-if="!isMuted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="control-icon-stroke">
+          <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+          <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/>
+        </svg>
+        <svg v-else viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="control-icon-stroke">
+          <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+          <line x1="23" y1="9" x2="17" y2="15"/>
+          <line x1="17" y1="9" x2="23" y2="15"/>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Focus History Log -->
+    <div class="focus-history-container">
+      <h4 class="history-title">Session History</h4>
+      <div v-if="focusHistory.length === 0" class="empty-history">
+        <p>No focus sessions completed today. Start working!</p>
+      </div>
+      <div v-else class="history-list">
+        <div v-for="session in focusHistory" :key="session.id" class="history-item">
+          <div class="history-info">
+            <span class="history-task">{{ session.taskTitle || 'General Focus Session' }}</span>
+            <span class="history-time">{{ formatHistoryDate(session.timestamp) }}</span>
+          </div>
+          <span class="history-duration">+{{ session.duration }}m</span>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -489,6 +522,89 @@ onUnmounted(() => {
 .control-icon-stroke {
   width: 16px;
   height: 16px;
+}
+
+.mute-btn {
+  flex-shrink: 0;
+  width: 42px;
+  height: 42px;
+  min-height: 0;
+  padding: 0;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* History Log Styles */
+.focus-history-container {
+  width: 100%;
+  border-top: 1px solid var(--border);
+  padding-top: 1.25rem;
+  margin-top: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.history-title {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--text-heading);
+}
+
+.empty-history {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  text-align: center;
+  padding: 1rem 0;
+}
+
+.history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  max-height: 180px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.history-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background-color: oklch(from var(--text) l c h / 0.02);
+  border: 1px solid var(--border);
+}
+
+.history-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.history-task {
+  font-size: 0.825rem;
+  font-weight: 600;
+  color: var(--text-heading);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.history-time {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+}
+
+.history-duration {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--success);
+  flex-shrink: 0;
 }
 
 .pomodoro-timer.focus-active {

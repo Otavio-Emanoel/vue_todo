@@ -296,6 +296,7 @@ const categoryStats = computed(() => {
           </button>
         </div>
       </div>
+    </div>
     <!-- Detailed Analytics Grid -->
     <div v-if="props.showStatsOnly" class="analytics-grid">
       <!-- Priority Distribution Panel -->
