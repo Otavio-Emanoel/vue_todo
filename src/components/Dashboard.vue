@@ -6,7 +6,26 @@ interface Tag {
   color: string;
 }
 
+interface SubTask {
+  id: string;
+  title: string;
+  completed: boolean;
+}
+
+interface Task {
+  id: string;
+  title: string;
+  description: string;
+  priority: 'low' | 'medium' | 'high';
+  tags: string[];
+  dueDate: string;
+  completed: boolean;
+  subtasks: SubTask[];
+  createdAt: string;
+}
+
 const props = withDefaults(defineProps<{
+  tasks: Task[];
   totalTasks: number;
   completedTasks: number;
   pendingTasks: number;
@@ -45,6 +64,45 @@ const completionRate = computed(() => {
 const strokeDasharray = 2 * Math.PI * 34; // Radius is 34, circumference ~ 213.6
 const strokeDashoffset = computed(() => {
   return strokeDasharray - (completionRate.value / 100) * strokeDasharray;
+});
+
+// Detailed Task Analytics
+const highPriorityTasksList = computed(() => props.tasks.filter(t => t.priority === 'high'));
+const mediumPriorityTasksList = computed(() => props.tasks.filter(t => t.priority === 'medium'));
+const lowPriorityTasksList = computed(() => props.tasks.filter(t => t.priority === 'low'));
+
+const highPriorityCompleted = computed(() => highPriorityTasksList.value.filter(t => t.completed).length);
+const mediumPriorityCompleted = computed(() => mediumPriorityTasksList.value.filter(t => t.completed).length);
+const lowPriorityCompleted = computed(() => lowPriorityTasksList.value.filter(t => t.completed).length);
+
+const highPriorityPercent = computed(() => {
+  const total = highPriorityTasksList.value.length;
+  return total ? Math.round((highPriorityCompleted.value / total) * 100) : 0;
+});
+const mediumPriorityPercent = computed(() => {
+  const total = mediumPriorityTasksList.value.length;
+  return total ? Math.round((mediumPriorityCompleted.value / total) * 100) : 0;
+});
+const lowPriorityPercent = computed(() => {
+  const total = lowPriorityTasksList.value.length;
+  return total ? Math.round((lowPriorityCompleted.value / total) * 100) : 0;
+});
+
+// Category/tag progress stats
+const categoryStats = computed(() => {
+  return props.tags.map(tag => {
+    const tagTasks = props.tasks.filter(t => t.tags.includes(tag.name));
+    const completed = tagTasks.filter(t => t.completed).length;
+    const total = tagTasks.length;
+    const percent = total ? Math.round((completed / total) * 100) : 0;
+    return {
+      name: tag.name,
+      color: tag.color,
+      completed,
+      total,
+      percent
+    };
+  });
 });
 </script>
 
@@ -236,6 +294,74 @@ const strokeDashoffset = computed(() => {
             <span class="dot" :style="{ backgroundColor: tag.color }"></span>
             {{ tag.name }}
           </button>
+        </div>
+      </div>
+    <!-- Detailed Analytics Grid -->
+    <div v-if="props.showStatsOnly" class="analytics-grid">
+      <!-- Priority Distribution Panel -->
+      <div class="glass-panel analytics-card">
+        <h4 class="card-title">Priority Completion</h4>
+        <div class="priority-chart">
+          <!-- High priority bar -->
+          <div class="priority-chart-row">
+            <div class="priority-info">
+              <span class="p-label high">High</span>
+              <span class="p-counts">{{ highPriorityCompleted }}/{{ highPriorityTasksList.length }}</span>
+            </div>
+            <div class="bar-track">
+              <div class="bar-fill bg-danger" :style="{ width: highPriorityPercent + '%' }"></div>
+            </div>
+            <span class="p-percent">{{ highPriorityPercent }}%</span>
+          </div>
+
+          <!-- Medium priority bar -->
+          <div class="priority-chart-row">
+            <div class="priority-info">
+              <span class="p-label medium">Medium</span>
+              <span class="p-counts">{{ mediumPriorityCompleted }}/{{ mediumPriorityTasksList.length }}</span>
+            </div>
+            <div class="bar-track">
+              <div class="bar-fill bg-warning" :style="{ width: mediumPriorityPercent + '%' }"></div>
+            </div>
+            <span class="p-percent">{{ mediumPriorityPercent }}%</span>
+          </div>
+
+          <!-- Low priority bar -->
+          <div class="priority-chart-row">
+            <div class="priority-info">
+              <span class="p-label low">Low</span>
+              <span class="p-counts">{{ lowPriorityCompleted }}/{{ lowPriorityTasksList.length }}</span>
+            </div>
+            <div class="bar-track">
+              <div class="bar-fill bg-success" :style="{ width: lowPriorityPercent + '%' }"></div>
+            </div>
+            <span class="p-percent">{{ lowPriorityPercent }}%</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Categories Progress Panel -->
+      <div class="glass-panel analytics-card">
+        <h4 class="card-title">Category Progress</h4>
+        <div v-if="categoryStats.length === 0 || !categoryStats.some(s => s.total > 0)" class="empty-category-stats">
+          <p>No active tasks in any categories.</p>
+        </div>
+        <div v-else class="categories-progress-list">
+          <div v-for="stat in categoryStats" :key="stat.name">
+            <div v-if="stat.total > 0" class="category-stat-row">
+              <div class="cat-info">
+                <span class="cat-name-chip" :style="{ color: stat.color, backgroundColor: stat.color + '15', borderColor: stat.color + '30' }">
+                  <span class="dot" :style="{ backgroundColor: stat.color }"></span>
+                  {{ stat.name }}
+                </span>
+                <span class="cat-counts">{{ stat.completed }}/{{ stat.total }} done</span>
+              </div>
+              <div class="bar-track">
+                <div class="bar-fill" :style="{ width: stat.percent + '%', backgroundColor: stat.color }"></div>
+              </div>
+              <span class="cat-percent">{{ stat.percent }}%</span>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -529,6 +655,140 @@ const strokeDashoffset = computed(() => {
   width: 6px;
   height: 6px;
   border-radius: 50%;
+}
+
+/* Analytics Grid & Cards */
+.analytics-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.25rem;
+  margin-top: 0.5rem;
+}
+
+@media (min-width: 800px) {
+  .analytics-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.analytics-card {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  padding: 1.5rem;
+}
+
+.card-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--text-heading);
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 0.75rem;
+}
+
+/* Charts */
+.priority-chart, .categories-progress-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.priority-chart-row, .category-stat-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  position: relative;
+}
+
+.priority-info, .cat-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.85rem;
+  font-weight: 600;
+  padding-right: 50px;
+}
+
+.p-label.high {
+  color: var(--danger);
+}
+
+.p-label.medium {
+  color: var(--warning);
+}
+
+.p-label.low {
+  color: var(--success);
+}
+
+.p-counts, .cat-counts {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+}
+
+.bar-track {
+  width: 100%;
+  height: 8px;
+  background-color: var(--border);
+  border-radius: 99px;
+  overflow: hidden;
+}
+
+.bar-fill {
+  height: 100%;
+  border-radius: 99px;
+  transition: width 0.4s ease;
+}
+
+.bar-fill.bg-danger {
+  background-color: var(--danger);
+}
+
+.bar-fill.bg-warning {
+  background-color: var(--warning);
+}
+
+.bar-fill.bg-success {
+  background-color: var(--success);
+}
+
+.p-percent, .cat-percent {
+  position: absolute;
+  right: 0;
+  top: 0;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text-heading);
+}
+
+/* Category chip inside stats */
+.cat-name-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  border: 1px solid transparent;
+}
+
+.cat-name-chip .dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+
+.empty-category-stats {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.85rem;
 }
 
 @media (max-width: 768px) {

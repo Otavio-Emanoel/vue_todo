@@ -1,10 +1,17 @@
 <script setup lang="ts">
-import { ref, computed, watch, onUnmounted } from 'vue';
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
 
 interface Task {
   id: string;
   title: string;
   completed: boolean;
+}
+
+interface FocusSessionLog {
+  id: string;
+  taskTitle: string | null;
+  timestamp: string;
+  duration: number;
 }
 
 const props = defineProps<{
@@ -29,8 +36,32 @@ const timeLeft = ref(MODE_TIMES.pomodoro);
 const isRunning = ref(false);
 let intervalId: number | null = null;
 
+const isMuted = ref(localStorage.getItem('pomodoro-muted') === 'true');
+const focusHistory = ref<FocusSessionLog[]>([]);
+
+onMounted(() => {
+  const savedHistory = localStorage.getItem('pomodoro-history');
+  if (savedHistory) {
+    focusHistory.value = JSON.parse(savedHistory);
+  }
+});
+
+watch(isMuted, (val) => {
+  localStorage.setItem('pomodoro-muted', String(val));
+});
+
+watch(focusHistory, (newHistory) => {
+  localStorage.setItem('pomodoro-history', JSON.stringify(newHistory));
+}, { deep: true });
+
+const formatHistoryDate = (isoStr: string) => {
+  const d = new Date(isoStr);
+  return d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
+};
+
 // Audio notification using Web Audio API to avoid external file dependencies
 const playNotificationSound = () => {
+  if (isMuted.value) return;
   try {
     const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
     if (!AudioContextClass) return;
@@ -104,6 +135,20 @@ const resetTimer = () => {
 const timerFinished = () => {
   pauseTimer();
   playNotificationSound();
+
+  if (currentMode.value === 'pomodoro') {
+    const newLog: FocusSessionLog = {
+      id: 'session-' + Date.now(),
+      taskTitle: props.activeTask ? props.activeTask.title : null,
+      timestamp: new Date().toISOString(),
+      duration: Math.round(MODE_TIMES.pomodoro / 60)
+    };
+    focusHistory.value.unshift(newLog);
+    if (focusHistory.value.length > 10) {
+      focusHistory.value = focusHistory.value.slice(0, 10);
+    }
+  }
+
   alert(`Timer finished! Time for a ${currentMode.value === 'pomodoro' ? 'break' : 'focus session'}!`);
   // Automatically switch mode
   if (currentMode.value === 'pomodoro') {
